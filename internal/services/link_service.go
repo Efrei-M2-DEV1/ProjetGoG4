@@ -17,10 +17,12 @@ import (
 // Définition du jeu de caractères pour la génération des codes courts.
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-// TODO Créer la struct
-// LinkService est une structure qui g fournit des méthodes pour la logique métier des liens.
+// LinkService est une structure qui fournit des méthodes pour la logique métier des liens.
 // Elle détient linkRepo qui est une référence vers une interface LinkRepository.
 // IMPORTANT : Le champ doit être du type de l'interface (non-pointeur).
+type LinkService struct {
+	linkRepo repository.LinkRepository
+}
 
 
 // NewLinkService crée et retourne une nouvelle instance de LinkService.
