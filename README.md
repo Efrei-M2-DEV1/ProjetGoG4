@@ -40,6 +40,7 @@ Ce projet est une synthèse complète et pratique de tous les concepts abordés 
 * `./url-shortener run-server` : Lance le serveur API, les workers de clics et le moniteur d'URLs.
 * `./url-shortener create --url="https://..."` : Crée une URL courte depuis la ligne de commande.
 * `./url-shortener stats --code="xyz123"` : Affiche les statistiques d'un lien donné.
+* `./url-shortener list` : Affiche la liste de tous les liens raccourcis avec leur code, URL longue et date de création.
 * `./url-shortener migrate` : Exécute les migrations GORM pour la base de données.
 6. **Features Avancées (Bonus - si le temps le permet)**
 * URLs personnalisées : Permettre aux utilisateurs de proposer leur propre alias (ex: /mon-alias-perso).
@@ -89,6 +90,16 @@ url-shortener/
 
 Suivez ces étapes pour mettre en place le projet et tester votre application (quand elle fonctionnera, évidemment).
 
+### Prérequis
+
+- **Go 1.24.3 ou supérieur**
+- **Un compilateur C (gcc)** pour compiler avec CGO :
+  - **Windows** : Installez MinGW-w64 (via winget : `winget install BrechtSanders.WinLibs.POSIX.UCRT` ou via Chocolatey : `choco install mingw`)
+  - **Linux** : `sudo apt-get install gcc` (ou équivalent selon votre distribution)
+  - **macOS** : `xcode-select --install`
+  
+**Note importante** : Le driver SQLite utilisé (`gorm.io/driver/sqlite`) nécessite CGO car il dépend de `go-sqlite3` qui est un wrapper autour de la bibliothèque SQLite en C. Assurez-vous que CGO est activé lors de la compilation.
+
 ### 1. Préparation Initiale
 
 1. **Clonez le dépôt :**
@@ -108,9 +119,15 @@ go mod tidy
 ### Construisez l'exécutable :
 Ceci compile votre application et crée un fichier url-shortener à la racine du projet.
 ```bash
-go build -o url-shortener
+# Sur Windows (PowerShell)
+$env:CGO_ENABLED=1; go build -o url-shortener.exe
+
+# Sur Linux/macOS ou Git Bash
+CGO_ENABLED=1 go build -o url-shortener
 ```
-Désormais, toutes les commandes seront lancées avec ./url-shortener.
+**Important** : N'oubliez pas d'activer CGO avec `CGO_ENABLED=1` car le driver SQLite le nécessite.
+
+Désormais, toutes les commandes seront lancées avec `./url-shortener` (ou `./url-shortener.exe` sur Windows).
 
 ### Initialisation de la Base de Données
 
@@ -170,6 +187,29 @@ URL longue: [https://www.example.com/ma-super-url-de-test-pour-le-tp-go-final](h
 Total de clics: 1
 ```
 (Le nombre de clics augmentera à chaque fois que tu accèderas à l'URL courte via ton navigateur).
+
+#### 4.3bis. Lister tous les liens (via la CLI)
+Pour voir tous les liens raccourcis enregistrés dans la base de données :
+
+1. Affiche la liste complète :
+```
+./url-shortener list
+```
+Le terminal affichera :
+```
+Liste des liens (X total):
+
+1. Code: XYZ123
+   URL longue: https://www.example.com/ma-super-url-de-test-pour-le-tp-go-final
+   URL courte: http://localhost:8080/XYZ123
+   Créé le: 2025-11-07 13:31:45
+
+2. Code: ABC456
+   URL longue: https://www.google.com
+   URL courte: http://localhost:8080/ABC456
+   Créé le: 2025-11-07 13:32:10
+...
+```
 
 #### 4.4. Tester l'API de Santé (via curl)
 Vérifie si ton serveur est bien opérationnel :
