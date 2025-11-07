@@ -7,9 +7,11 @@ import (
 	"github.com/axellelanca/urlshortener/internal/repository" // Importe le package repository
 )
 
-// TODO : créer la struct
 // ClickService est une structure qui fournit des méthodes pour la logique métier des clics.
-// Elle est juste composer de clickRepo qui est de type ClickRepository
+// Elle est composée de clickRepo qui est de type ClickRepository
+type ClickService struct {
+	clickRepo repository.ClickRepository
+}
 
 // NewClickService crée et retourne une nouvelle instance de ClickService.
 // C'est la fonction recommandée pour obtenir un service, assurant que toutes ses dépendances sont injectées.
