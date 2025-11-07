@@ -32,11 +32,23 @@ func NewLinkService(linkRepo repository.LinkRepository) *LinkService {
 	}
 }
 
-// TODO Créer la méthode GenerateShortCode
-// GenerateShortCode est une méthode rattachée à LinkService
-// Elle génère un code court aléatoire d'une longueur spécifiée. Elle prend une longueur en paramètre et retourne une string et une erreur
+// GenerateShortCode génère un code court aléatoire d'une longueur spécifiée.
 // Il utilise le package 'crypto/rand' pour éviter la prévisibilité.
-// Je vous laisse chercher un peu :) C'est faisable en une petite dizaine de ligne
+func (s *LinkService) GenerateShortCode(length int) (string, error) {
+	result := make([]byte, length)
+	charsetLen := big.NewInt(int64(len(charset)))
+	
+	for i := 0; i < length; i++ {
+		// Génère un nombre aléatoire sécurisé entre 0 et len(charset)-1
+		randomIndex, err := rand.Int(rand.Reader, charsetLen)
+		if err != nil {
+			return "", fmt.Errorf("erreur lors de la génération du code aléatoire: %w", err)
+		}
+		result[i] = charset[randomIndex.Int64()]
+	}
+	
+	return string(result), nil
+}
 
 
 // CreateLink crée un nouveau lien raccourci.
