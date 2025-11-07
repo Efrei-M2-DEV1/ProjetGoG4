@@ -1,10 +1,10 @@
 package cli
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/url" // Pour valider le format de l'URL
-	"os"
 
 	cmd2 "github.com/axellelanca/urlshortener/cmd"
 	"github.com/axellelanca/urlshortener/internal/repository"
@@ -14,7 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO : Faire une variable longURLFlag qui stockera la valeur du flag --url
+// longURLFlag stocke la valeur du flag --url
+var longURLFlag string
 
 // CreateCmd représente la commande 'create'
 var CreateCmd = &cobra.Command{
@@ -25,26 +26,50 @@ var CreateCmd = &cobra.Command{
 Exemple:
   url-shortener create --url="https://www.google.com/search?q=go+lang"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO 1: Valider que le flag --url a été fourni.
+		// Valider que le flag --url a été fourni.
+		if longURLFlag == "" {
+			log.Fatalf("FATAL: Le flag --url est requis")
+		}
 
-		// TODO Validation basique du format de l'URL avec le package url et la fonction ParseRequestURI
-		// si erreur, os.Exit(1)
+		// Validation basique du format de l'URL avec le package url et la fonction ParseRequestURI
+		_, err := url.ParseRequestURI(longURLFlag)
+		if err != nil {
+			log.Fatalf("FATAL: URL invalide: %v", err)
+		}
 
-		// TODO : Charger la configuration chargée globalement via cmd.cfg
+		// Charger la configuration chargée globalement via cmd.Cfg
+		cfg := cmd2.Cfg
+		if cfg == nil {
+			log.Fatalf("FATAL: Configuration non chargée")
+		}
 
-		// TODO : Initialiser la connexion à la base de données SQLite.
+		// Initialiser la connexion à la base de données SQLite.
+		db, err := gorm.Open(sqlite.Open(cfg.Database.Name), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("FATAL: Échec de la connexion à la base de données: %v", err)
+		}
 
 		sqlDB, err := db.DB()
 		if err != nil {
 			log.Fatalf("FATAL: Échec de l'obtention de la base de données SQL sous-jacente: %v", err)
 		}
 
-		// TODO S'assurer que la connexion est fermée à la fin de l'exécution de la commande
-		
-		// TODO : Initialiser les repositories et services nécessaires NewLinkRepository & NewLinkService
+		// S'assurer que la connexion est fermée à la fin de l'exécution de la commande
+		defer func() {
+			if err := sqlDB.Close(); err != nil {
+				log.Printf("Erreur lors de la fermeture de la connexion: %v", err)
+			}
+		}()
 
-		// TODO : Appeler le LinkService et la fonction CreateLink pour créer le lien court.
-		// os.Exit(1) si erreur
+		// Initialiser les repositories et services nécessaires NewLinkRepository & NewLinkService
+		linkRepo := repository.NewLinkRepository(db)
+		linkService := services.NewLinkService(linkRepo)
+
+		// Appeler le LinkService et la fonction CreateLink pour créer le lien court.
+		link, err := linkService.CreateLink(longURLFlag)
+		if err != nil {
+			log.Fatalf("FATAL: Erreur lors de la création du lien: %v", err)
+		}
 
 		fullShortURL := fmt.Sprintf("%s/%s", cfg.Server.BaseURL, link.ShortCode)
 		fmt.Printf("URL courte créée avec succès:\n")
@@ -56,10 +81,12 @@ Exemple:
 // init() s'exécute automatiquement lors de l'importation du package.
 // Il est utilisé pour définir les flags que cette commande accepte.
 func init() {
-	// TODO : Définir le flag --url pour la commande create.
+	// Définir le flag --url pour la commande create.
+	CreateCmd.Flags().StringVar(&longURLFlag, "url", "", "URL longue à raccourcir (requis)")
 
-	// TODO :  Marquer le flag comme requis
+	// Marquer le flag comme requis
+	CreateCmd.MarkFlagRequired("url")
 
-	// TODO : Ajouter la commande à RootCmd
-
+	// Ajouter la commande à RootCmd
+	cmd2.RootCmd.AddCommand(CreateCmd)
 }
