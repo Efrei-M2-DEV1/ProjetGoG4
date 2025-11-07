@@ -10,6 +10,7 @@ import (
 
 	"gorm.io/gorm" // Nécessaire pour la gestion spécifique de gorm.ErrRecordNotFound
 
+	"github.com/axellelanca/urlshortener/internal/customerrors"
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/repository" // Importe le package repository
 )
@@ -77,7 +78,11 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 	}
 
 	if shortCode == "" {
-		return nil, errors.New("impossible de générer un code court unique après plusieurs tentatives")
+		// Utilisation d'une erreur personnalisée pour indiquer l'échec après plusieurs tentatives
+		return nil, &customerrors.ErrMaxRetriesExceeded{
+			MaxRetries: maxRetries,
+			Operation:  "génération de code court unique",
+		}
 	}
 
 	link := &models.Link{
@@ -98,6 +103,10 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 func (s *LinkService) GetLinkByShortCode(shortCode string) (*models.Link, error) {
 	link, err := s.linkRepo.GetLinkByShortCode(shortCode)
 	if err != nil {
+		// Si le lien n'est pas trouvé, retourner une erreur personnalisée
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, &customerrors.ErrLinkNotFound{ShortCode: shortCode}
+		}
 		return nil, fmt.Errorf("erreur lors de la récupération du lien: %w", err)
 	}
 	return link, nil
@@ -108,6 +117,10 @@ func (s *LinkService) GetLinkByShortCode(shortCode string) (*models.Link, error)
 func (s *LinkService) GetLinkStats(shortCode string) (*models.Link, int, error) {
 	link, err := s.linkRepo.GetLinkByShortCode(shortCode)
 	if err != nil {
+		// Si le lien n'est pas trouvé, retourner une erreur personnalisée
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, &customerrors.ErrLinkNotFound{ShortCode: shortCode}
+		}
 		return nil, 0, fmt.Errorf("erreur lors de la récupération du lien: %w", err)
 	}
 
