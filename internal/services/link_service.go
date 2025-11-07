@@ -106,12 +106,16 @@ func (s *LinkService) GetLinkByShortCode(shortCode string) (*models.Link, error)
 // GetLinkStats récupère les statistiques pour un lien donné (nombre total de clics).
 // Il interagit avec le LinkRepository pour obtenir le lien, puis avec le ClickRepository
 func (s *LinkService) GetLinkStats(shortCode string) (*models.Link, int, error) {
-	// TODO : Récupérer le lien par son shortCode
+	link, err := s.linkRepo.GetLinkByShortCode(shortCode)
+	if err != nil {
+		return nil, 0, fmt.Errorf("erreur lors de la récupération du lien: %w", err)
+	}
 
+	count, err := s.linkRepo.CountClicksByLinkID(link.ID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("erreur lors du comptage des clics: %w", err)
+	}
 
-	// TODO 4: Compter le nombre de clics pour ce LinkID
-
-	// TODO : on retourne les 3 valeurs
-	return
+	return link, count, nil
 }
 
