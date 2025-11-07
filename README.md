@@ -113,6 +113,8 @@ Suivez ces étapes pour mettre en place le projet et tester votre application (q
   - **Linux** : `sudo apt-get install gcc` (ou équivalent selon votre distribution)
   - **macOS** : `xcode-select --install`
 
+  **Note** : Après l'installation du compilateur C, il peut être nécessaire de redémarrer votre terminal pour que les changements soient pris en compte.
+
 **Note importante** : Le driver SQLite utilisé (`gorm.io/driver/sqlite`) nécessite CGO car il dépend de `go-sqlite3` qui est un wrapper autour de la bibliothèque SQLite en C. Assurez-vous que CGO est activé lors de la compilation.
 
 ### 1. Préparation Initiale
