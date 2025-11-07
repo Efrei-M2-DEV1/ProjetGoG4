@@ -1,2 +1,12 @@
 .idea/
 .DS_Store
+
+# Executables
+*.exe
+url-shortener
+url-shortener.exe
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
