@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/url" // Pour valider le format de l'URL
