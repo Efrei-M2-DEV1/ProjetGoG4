@@ -54,48 +54,43 @@ func (s *LinkService) GenerateShortCode(length int) (string, error) {
 // CreateLink crée un nouveau lien raccourci.
 // Il génère un code court unique, puis persiste le lien dans la base de données.
 func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
-	// TODO 1: Implémenter la logique de retry pour générer un code court unique.
-	// Essayez de générer un code, vérifiez s'il existe déjà en base, et retentez si une collision est trouvée.
-	// Limitez le nombre de tentatives pour éviter une boucle infinie.
-
-	// TODO Créer une variable shortcode pour stocker le shortcode créé
-
-	// TODO Définir un nombre maximum (5) de tentative pour trouver un code unique  (maxRetries)
-
+	var shortCode string
+	const maxRetries = 5
 
 	for i := 0; i < maxRetries; i++ {
-		// TODO : Génère un code de 6 caractères (GenerateShortCode)
-
-
-		// TODO : Vérifie si le code généré existe déjà en base de données (GetLinkbyShortCode)
-		// On ignore la première valeur
-
+		code, err := s.GenerateShortCode(6)
 		if err != nil {
-			// Si l'erreur est 'record not found' de GORM, cela signifie que le code est unique.
+			return nil, fmt.Errorf("erreur lors de la génération du code court: %w", err)
+		}
+
+		_, err = s.linkRepo.GetLinkByShortCode(code)
+		
+		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				shortCode = code // Le code est unique, on peut l'utiliser
-				break            // Sort de la boucle de retry
+				shortCode = code
+				break
 			}
-			// Si c'est une autre erreur de base de données, retourne l'erreur.
 			return nil, fmt.Errorf("database error checking short code uniqueness: %w", err)
 		}
 
-		// Si aucune erreur (le code a été trouvé), cela signifie une collision.
 		log.Printf("Short code '%s' already exists, retrying generation (%d/%d)...", code, i+1, maxRetries)
-		// La boucle continuera pour générer un nouveau code.
 	}
 
-	// TODO : Si après toutes les tentatives, aucun code unique n'a été trouvé... Errors.New
+	if shortCode == "" {
+		return nil, errors.New("impossible de générer un code court unique après plusieurs tentatives")
+	}
 
+	link := &models.Link{
+		LongURL:   longURL,
+		ShortCode: shortCode,
+		CreatedAt: time.Now(),
+	}
 
-	// TODO Crée une nouvelle instance du modèle Link.
-	link :=
+	if err := s.linkRepo.CreateLink(link); err != nil {
+		return nil, fmt.Errorf("erreur lors de la création du lien: %w", err)
+	}
 
-	// TODO Persiste le nouveau lien dans la base de données via le repository (CreateLink)
-
-
-	// TODO Retourne le lien créé
-
+	return link, nil
 }
 
 // GetLinkByShortCode récupère un lien via son code court.
