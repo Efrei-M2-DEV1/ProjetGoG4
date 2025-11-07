@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/axellelanca/urlshortener/internal/customerrors"
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm" // Pour gérer gorm.ErrRecordNotFound
 )
 
 // ClickEvent définit la structure minimale d'un événement de clic transmis via le channel.
@@ -107,8 +107,9 @@ func RedirectHandler(linkService LinkServiceInterface) gin.HandlerFunc {
 
 		link, err := linkService.GetLinkByShortCode(shortCode)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "link not found"})
+			var notFoundErr *customerrors.ErrLinkNotFound
+			if errors.As(err, &notFoundErr) {
+				c.JSON(http.StatusNotFound, gin.H{"error": notFoundErr.Error()})
 				return
 			}
 			log.Printf("Error retrieving link for %s: %v", shortCode, err)
@@ -145,8 +146,9 @@ func GetLinkStatsHandler(linkService LinkServiceInterface) gin.HandlerFunc {
 
 		link, totalClicks, err := linkService.GetLinkStats(shortCode)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "link not found"})
+			var notFoundErr *customerrors.ErrLinkNotFound
+			if errors.As(err, &notFoundErr) {
+				c.JSON(http.StatusNotFound, gin.H{"error": notFoundErr.Error()})
 				return
 			}
 			log.Printf("Error getting stats for %s: %v", shortCode, err)
